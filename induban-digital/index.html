@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Prototipo ilustrativo INDUBAN Digital - Práctica de Administración I, UAPA">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>INDUBAN Digital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: tablero operativo de una sola columna, pestañas arriba, cada vista como un panel de control sobrio */
+:root{
+  --bg:#f4f6f2; --surface:#ffffff; --ink:#13231b; --muted:#55675d; --line:#d5ded7;
+  --brand:#1d5a40; --brand-soft:#e2eee7; --roast:#b0602a; --roast-soft:#f6e9de;
+  --hero-bg:#12372a; --hero-fg:#ffffff; --hero-muted:#bcd3c6; --hero-accent:#e4a467;
+  --ok:#2a8a4a; --ok-soft:#e0f2e5; --warn:#b7791f; --warn-soft:#fbf0d9; --bad:#c0392b; --bad-soft:#f9e1de;
+  --f-display:"Bitter",Georgia,"Times New Roman",serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b1611; --surface:#12231b; --ink:#e9f1ec; --muted:#9fb5a8; --line:#24392e;
+  --brand:#86c9a5; --brand-soft:#183427; --roast:#e4a467; --roast-soft:#3a2818;
+  --hero-bg:#12372a; --hero-fg:#ffffff; --hero-muted:#bcd3c6; --hero-accent:#e4a467;
+  --ok:#5fcf8e; --ok-soft:#153325; --warn:#f0b54a; --warn-soft:#3a2d12; --bad:#ff8a7a; --bad-soft:#3d1c18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1611; --surface:#12231b; --ink:#e9f1ec; --muted:#9fb5a8; --line:#24392e;
+  --brand:#86c9a5; --brand-soft:#183427; --roast:#e4a467; --roast-soft:#3a2818;
+  --hero-bg:#12372a; --hero-fg:#ffffff; --hero-muted:#bcd3c6; --hero-accent:#e4a467;
+  --ok:#5fcf8e; --ok-soft:#153325; --warn:#f0b54a; --warn-soft:#3a2d12; --bad:#ff8a7a; --bad-soft:#3d1c18; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px;padding-block:24px 48px;display:grid;gap:20px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.2}
+h1{font-size:clamp(1.7rem,4vw,2.3rem);color:var(--brand)}
+h2{font-size:1.25rem}
+h3{font-size:1rem;font-family:var(--f-body);font-weight:600}
+p{margin:0}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+
+header{display:grid;gap:12px;background:var(--hero-bg);color:var(--hero-fg);border-radius:12px;padding:24px;border-bottom:6px solid var(--hero-accent)}
+header h1{color:var(--hero-fg)}
+header h1 span{color:var(--hero-accent)}
+header .eyebrow{color:var(--hero-accent)}
+header .lede{color:var(--hero-muted)}
+.eyebrow{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.notice{display:flex;gap:10px;align-items:flex-start;background:#a5552a;color:#ffffff;border-radius:8px;padding:10px 14px;font-size:.9rem}
+.notice b{color:#ffffff}
+.lede{max-width:68ch;color:var(--muted)}
+
+nav{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+nav button{font:inherit;font-weight:600;background:none;border:0;border-bottom:4px solid transparent;color:var(--muted);padding:10px 14px;cursor:pointer}
+nav button[aria-selected="true"]{color:var(--brand);border-bottom-color:var(--roast)}
+nav button:focus-visible,.kpi:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+.panel{display:grid;gap:18px}
+.panel-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-size:.8rem;border-radius:999px;padding:3px 10px;font-weight:600;white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.warn{background:var(--warn-soft);color:var(--warn)} .chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.neutral{background:var(--brand-soft);color:var(--brand)}
+
+/* KPI grid */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:8px;padding:14px;display:grid;gap:6px;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.kpi.ok{border-left-color:var(--ok)} .kpi.warn{border-left-color:var(--warn)} .kpi.bad{border-left-color:var(--bad)}
+.kpi[aria-pressed="true"]{box-shadow:0 0 0 2px var(--brand)}
+.kpi .area{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.kpi .name{font-weight:600}
+.kpi .val{font-family:var(--f-data);font-size:1.7rem;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.82rem;color:var(--muted)}
+.spark{width:100%;height:38px;display:block}
+
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:10px}
+.detail dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;margin:0}
+.detail dt{color:var(--muted);font-size:.85rem}
+.detail dd{margin:0;min-width:0}
+
+.alerts{display:grid;gap:8px}
+.alert{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:start}
+.alert .dot{width:10px;height:10px;border-radius:50%;margin-top:6px}
+.dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)} .dot.ok{background:var(--ok)}
+.alert .act{grid-column:2;font-size:.88rem;color:var(--muted)}
+
+/* Trazabilidad */
+.trace{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:20px;align-items:start}
+.lotcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:12px}
+.qr{width:150px;height:150px;image-rendering:pixelated;background:#fff;padding:8px;border:1px solid var(--line);border-radius:4px}
+.lotcard dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 12px;margin:0;font-size:.88rem}
+.lotcard dt{color:var(--muted)} .lotcard dd{margin:0}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.step{display:grid;grid-template-columns:32px minmax(0,1fr);gap:12px;position:relative;padding-bottom:16px}
+.step:not(:last-child)::before{content:"";position:absolute;left:15px;top:30px;bottom:0;width:2px;background:var(--line)}
+.num{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);font-weight:600;font-family:var(--f-data);font-size:.85rem}
+.step.done .num{background:var(--roast);color:#ffffff}
+.step .box{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:grid;gap:4px}
+.step .top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.step .when{font-family:var(--f-data);font-size:.8rem;color:var(--muted)}
+.step .data{font-size:.86rem;color:var(--muted)}
+
+/* Ruta */
+.road{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.hz{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--brand);border-radius:8px;padding:14px;display:grid;gap:10px;align-content:start}
+.hz.now{box-shadow:0 0 0 2px var(--roast)}
+.hz ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:.9rem}
+.money{font-family:var(--f-data);font-variant-numeric:tabular-nums;font-size:1.15rem}
+.bar{height:10px;border-radius:5px;background:var(--brand-soft);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--brand)}
+.timeline{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:10px}
+.track{position:relative;height:28px;border-radius:6px;background:var(--brand-soft);display:grid;grid-template-columns:repeat(3,1fr)}
+.track div{border-right:2px solid var(--surface);display:grid;place-items:center;font-size:.78rem;font-weight:600;color:var(--brand)}
+.track div:last-child{border-right:0}
+.fill{position:absolute;left:0;top:0;bottom:0;background:var(--brand);opacity:.28;border-radius:6px 0 0 6px}
+.marker{position:absolute;top:-6px;bottom:-6px;width:3px;background:var(--roast);border-radius:2px}
+.ticks{display:flex;justify-content:space-between;font-family:var(--f-data);font-size:.75rem;color:var(--muted)}
+
+footer{border-top:1px solid var(--line);padding-top:14px;font-size:.82rem;color:var(--muted);display:grid;gap:4px}
+
+@media (max-width:760px){.trace{grid-template-columns:1fr}.road{grid-template-columns:1fr}}
+
+/* Movimiento */
+.progress{position:fixed;left:0;top:0;height:4px;width:100%;transform-origin:0 50%;transform:scaleX(0);background:var(--roast);z-index:20}
+nav{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:10;transition:box-shadow .2s}
+nav.stuck{box-shadow:0 6px 14px -10px rgba(18,55,42,.45)}
+.live{display:inline-flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted);font-family:var(--f-data)}
+.live i{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 var(--ok)}
+.kpi .val{transition:color .4s}
+.kpi .val.up{color:var(--ok)} .kpi .val.down{color:var(--bad)}
+.delta{font-family:var(--f-data);font-size:.78rem;font-weight:500;margin-left:6px;vertical-align:middle}
+.delta.up{color:var(--ok)} .delta.down{color:var(--bad)}
+.bar span,.fill{transition:width 1s cubic-bezier(.2,.7,.2,1)}
+@media (prefers-reduced-motion:no-preference){
+  .kpi{transition:box-shadow .15s, transform .2s}
+  .kpi:hover{transform:translateY(-3px)}
+  .live i{animation:pulse 1.8s infinite}
+  .pre{opacity:0;transform:translateY(26px)}
+  .reveal{transition:opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1)}
+  .rise{animation:rise .55s cubic-bezier(.2,.7,.2,1) both}
+  .spark .line{stroke-dasharray:var(--len);animation:draw 1.1s ease-out}
+}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 60%,transparent)}70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes draw{from{stroke-dashoffset:var(--len)}to{stroke-dashoffset:0}}
+</style>
+
+</head>
+<body>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Práctica de Administración I · UAPA · Anexo del Trabajo Final</span>
+    <h1>INDUBAN <span>Digital</span></h1>
+    <p class="lede">Vista previa de cómo funcionaría la metodología propuesta por el grupo: el tablero de indicadores que consultaría la gerencia, la trazabilidad digital de un lote de café y la ruta de implementación en 36 meses.</p>
+    <div class="notice" role="note"><b>Prototipo ilustrativo.</b><span>Todos los valores son simulados con fines académicos y no corresponden a datos reales de INDUBAN. Las metas provienen de las Tablas 2 y 9 del trabajo.</span></div>
+  </header>
+
+  <nav role="tablist" aria-label="Vistas del prototipo">
+    <button role="tab" id="tab-tablero" aria-controls="tablero" aria-selected="true">Tablero de indicadores</button>
+    <button role="tab" id="tab-trazabilidad" aria-controls="trazabilidad" aria-selected="false">Trazabilidad de un lote</button>
+    <button role="tab" id="tab-ruta" aria-controls="ruta" aria-selected="false">Ruta de transformación</button>
+  </nav>
+
+  <!-- TABLERO -->
+  <section class="panel" id="tablero" role="tabpanel" aria-labelledby="tab-tablero">
+    <div class="panel-head">
+      <div><h2>Cuadro de Mando Integral · Tablero ejecutivo</h2><p class="muted">Corte simulado: mes 18 del proyecto. Administrado por la unidad de Control de Gestión y KPIs.</p></div>
+      <div style="display:grid;gap:8px;justify-items:end"><span class="live"><i></i><span id="clock">En vivo (simulado)</span></span><div class="chips" id="summary"></div></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="detail" id="detail" aria-live="polite"></div>
+    <div>
+      <h3 style="margin-bottom:8px">Alertas y acciones correctivas</h3>
+      <div class="alerts" id="alerts"></div>
+    </div>
+  </section>
+
+  <!-- TRAZABILIDAD -->
+  <section class="panel" id="trazabilidad" role="tabpanel" aria-labelledby="tab-trazabilidad" hidden>
+    <div class="panel-head">
+      <div><h2>Ficha de trazabilidad digital</h2><p class="muted">Lo que vería un cliente o un auditor al escanear el código de un lote de exportación. Meta del proyecto: 100 % de los lotes de exportación con trazabilidad digital al mes 30.</p></div>
+    </div>
+    <div class="trace">
+      <div class="lotcard">
+        <canvas class="qr" id="qr" width="29" height="29" aria-label="Código del lote (ilustrativo)"></canvas>
+        <dl>
+          <dt>Lote</dt><dd class="mono">EXP-2026-0418</dd>
+          <dt>Producto</dt><dd>Café tostado en grano, 1 kg</dd>
+          <dt>Variedad</dt><dd>Arábica</dd>
+          <dt>Unidades</dt><dd class="mono">2,400</dd>
+          <dt>Destino</dt><dd>Exportación</dd>
+          <dt>Estado</dt><dd><span class="chip ok">Entregado</span></dd>
+        </dl>
+      </div>
+      <ol class="steps" id="steps"></ol>
+    </div>
+  </section>
+
+  <!-- RUTA -->
+  <section class="panel" id="ruta" role="tabpanel" aria-labelledby="tab-ruta" hidden>
+    <div class="panel-head">
+      <div><h2>Ruta de transformación · 36 meses</h2><p class="muted">Horizontes, sistemas y presupuesto de la etapa de Planeación (Tablas 2 y 6). Presupuesto total estimado: <span class="mono">RD$ 73,879,300</span>.</p></div>
+    </div>
+    <div class="timeline">
+      <div class="track" id="track"><span class="fill" id="fill"></span><span class="marker" id="marker" title="Corte simulado: mes 18"></span><div>Fundamentos</div><div>Expansión</div><div>Consolidación</div></div>
+      <div class="ticks"><span>Mes 1</span><span>Mes 12</span><span>Mes 24</span><span>Mes 36</span></div>
+      <p class="muted" style="font-size:.85rem">La línea naranja indica el corte simulado del tablero (mes 18).</p>
+    </div>
+    <div class="road" id="road"></div>
+  </section>
+
+  <footer>
+    <span>Elaborado por Rosina Alexandra Reyes, David Gabriel Merejo Rivas, Carolenny Acevedo Ramos y Arjony E. Tavera Ortega. Facilitadora: Carmela Marisol Almonte Jiménez.</span>
+    <span>Propuesta académica del grupo. No es un sistema de INDUBAN ni utiliza información interna de la empresa.</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+const KPIS=[
+ {id:'inv',area:'Logística',name:'Precisión de inventario',unit:'%',val:98.6,goal:'≥ 99 % al mes 18',status:'warn',series:[91.2,93.5,95.0,96.1,97.2,97.9,98.3,98.6],
+  formula:'Registros que coinciden con el conteo físico ÷ registros contados × 100',freq:'Semanal (conteo cíclico)',owner:'Centro de Distribución y Logística'},
+ {id:'ent',area:'Logística',name:'Entregas a tiempo',unit:'%',val:93.4,goal:'Se fija con la línea base (simulada: 95 %)',status:'warn',series:[86,87.5,88.1,90.2,91,92.4,93,93.4],
+  formula:'Pedidos entregados en plazo ÷ pedidos entregados × 100',freq:'Semanal',owner:'Centro de Distribución y Logística'},
+ {id:'cap',area:'Personas',name:'Usuarios capacitados',unit:'%',val:100,goal:'100 % antes de cada arranque',status:'ok',series:[40,62,80,100,100,100,100,100],
+  formula:'Usuarios capacitados ÷ usuarios de cada sistema × 100',freq:'Mensual',owner:'Talento y Cultura'},
+ {id:'par',area:'Personas',name:'Registros paralelos fuera del ERP',unit:'',val:0,goal:'0 al mes 12',status:'ok',series:[38,30,21,12,5,2,0,0],lowerBetter:true,
+  formula:'Hojas de cálculo paralelas activas fuera del ERP',freq:'Mensual',owner:'Control de Gestión y KPIs'},
+ {id:'tab',area:'Comercial',name:'Pedidos tomados en tableta',unit:'%',val:58,goal:'80 % al mes 24',status:'ok',series:[0,0,8,19,31,42,51,58],
+  formula:'Pedidos registrados en tableta ÷ pedidos totales × 100',freq:'Mensual',owner:'Dirección Comercial y de Marketing'},
+ {id:'pro',area:'Comercial',name:'Precisión del pronóstico de ventas',unit:'%',val:76.5,goal:'≥ 85 % al mes 36',status:'ok',series:[68,69.5,70.2,72,73.1,74.8,75.9,76.5],
+  formula:'(1 − |ventas reales − pronóstico| ÷ ventas reales) × 100',freq:'Mensual',owner:'Dirección Comercial y de Marketing'},
+ {id:'mer',area:'Producción',name:'Merma por proceso',unit:'%',val:2.9,goal:'Se fija con la línea base (simulada: 2.0 %)',status:'bad',series:[2.4,2.3,2.2,2.5,2.6,2.8,2.7,2.9],lowerBetter:true,
+  formula:'Kg de merma ÷ kg procesados × 100',freq:'Mensual',owner:'Dirección de Operaciones'},
+ {id:'hit',area:'Proyecto',name:'Avance del proyecto',unit:'%',val:92,goal:'Se fija con la línea base (simulada: 90 %)',status:'ok',series:[100,96,94,95,93,91,92,92],
+  formula:'Hitos cumplidos ÷ hitos programados × 100',freq:'Mensual',owner:'Oficina de Gestión de Proyectos (PMO)'}
+];
+const ALERTS=[
+ {s:'bad',t:'Merma por proceso por encima de la meta (2.9 % frente a 2.0 %).',a:'Acción correctiva: revisar el flujo de tostado y empaque con Calidad e Inocuidad; plan de mejora con meta semanal y responsable definido.'},
+ {s:'warn',t:'Precisión de inventario a 0.4 puntos de la meta del mes 18.',a:'Acción correctiva: reconteo cíclico en las ubicaciones con más diferencias y reentrenamiento en el uso de terminales RF.'},
+ {s:'warn',t:'Entregas a tiempo por debajo de la meta simulada (93.4 % frente a 95 %).',a:'Acción correctiva: revisar la planificación de rutas y los horarios de despacho; seguimiento en la reunión semanal coordinada por la PMO.'}
+];
+const LABEL={ok:'En meta',warn:'Atención',bad:'Fuera de meta'};
+const fmt=(k)=>(k.unit==='%'?k.val.toLocaleString('es-DO',{minimumFractionDigits:k.val%1?1:0,maximumFractionDigits:1})+' %':k.val.toLocaleString('es-DO'));
+function spark(series,lower){
+  const w=200,h=38,p=3,min=Math.min(...series),max=Math.max(...series),r=(max-min)||1;
+  const pts=series.map((v,i)=>[p+i*(w-2*p)/(series.length-1),h-p-(v-min)/r*(h-2*p)]);
+  const d=pts.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' ');
+  const last=pts[pts.length-1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><path d="${d} L${last[0].toFixed(1)} ${h} L${p} ${h} Z" fill="var(--brand-soft)" stroke="none"/><path class="line" pathLength="400" style="--len:400" d="${d}" fill="none" stroke="var(--brand)" stroke-width="2" vector-effect="non-scaling-stroke"/><circle cx="${last[0]}" cy="${last[1]}" r="3.5" fill="var(--roast)"/></svg>`;
+}
+const grid=document.getElementById('kpis');
+const inner=(k,dir,dv)=>`<span class="area">${k.area}</span><span class="name">${k.name}</span><span class="val ${dir||''}">${fmt(k)}${dir?`<span class="delta ${dir}">${dir==='up'?'▲':'▼'} ${dv}</span>`:''}</span>${spark(k.series,k.lowerBetter)}<span class="row"><span>Meta: ${k.goal}</span><span class="chip ${k.status}">${LABEL[k.status]}</span></span>`;
+grid.innerHTML=KPIS.map(k=>`<button class="kpi ${k.status}" data-id="${k.id}" aria-pressed="false">${inner(k)}</button>`).join('');
+const counts={ok:0,warn:0,bad:0};KPIS.forEach(k=>counts[k.status]++);
+document.getElementById('summary').innerHTML=`<span class="chip ok">${counts.ok} en meta</span><span class="chip warn">${counts.warn} en atención</span><span class="chip bad">${counts.bad} fuera de meta</span>`;
+const detail=document.getElementById('detail');
+function show(id){
+  const k=KPIS.find(x=>x.id===id);
+  grid.querySelectorAll('.kpi').forEach(b=>b.setAttribute('aria-pressed',b.dataset.id===id));
+  detail.innerHTML=`<h3>${k.name}</h3><dl><dt>Fórmula</dt><dd>${k.formula}</dd><dt>Meta</dt><dd>${k.goal}</dd><dt>Frecuencia</dt><dd>${k.freq}</dd><dt>Responsable</dt><dd>${k.owner}</dd><dt>Valor simulado</dt><dd class="mono">${fmt(k)} · últimos 8 meses</dd></dl>`;
+}
+grid.addEventListener('click',e=>{const b=e.target.closest('.kpi');if(b)show(b.dataset.id)});
+show('inv');
+let current='inv';grid.addEventListener('click',e=>{const b=e.target.closest('.kpi');if(b)current=b.dataset.id});
+
+// Actualización "en vivo" simulada: pequeñas variaciones alrededor del valor base
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const BASE=Object.fromEntries(KPIS.map(k=>[k.id,k.val]));
+const SPREAD={inv:.25,ent:.6,tab:1.2,pro:.6,mer:.15,hit:.8};
+const LIMIT={inv:[97.8,98.9],ent:[92,94.8],tab:[55,62],pro:[75,78],mer:[2.6,3.1],hit:[90,94]};
+function tick(){
+  KPIS.forEach(k=>{
+    if(!SPREAD[k.id])return;
+    const prev=k.val;let v=+(prev+(Math.random()-.5)*2*SPREAD[k.id]).toFixed(1);
+    v=Math.min(LIMIT[k.id][1],Math.max(LIMIT[k.id][0],v));
+    if(v===prev)return;
+    k.val=v;k.series=[...k.series.slice(1),v];
+    const better=k.lowerBetter?v<prev:v>prev;
+    const btn=grid.querySelector(`[data-id="${k.id}"]`);
+    btn.innerHTML=inner(k,better?'up':'down',Math.abs(v-prev).toFixed(1));
+    if(current===k.id)show(k.id);
+  });
+  const t=new Date();document.getElementById('clock').textContent='En vivo (simulado) · '+t.toLocaleTimeString('es-DO',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+if(!reduce)setInterval(tick,3200);
+document.getElementById('alerts').innerHTML=ALERTS.map(a=>`<div class="alert"><span class="dot ${a.s}"></span><span>${a.t}</span><span class="act">${a.a}</span></div>`).join('');
+
+// Trazabilidad
+const STEPS=[
+ ['Cosecha en finca','Cafetalera del Sur · Rancho Arriba, San José de Ocoa','12 feb 2026','Arábica · recolección selectiva · beneficiado húmedo ecológico'],
+ ['Recepción en factoría','Factoría de Baní','16 feb 2026','Secado y almacenaje del café pergamino · humedad registrada: 11.8 %'],
+ ['Recepción en planta','Planta de Santo Domingo','3 mar 2026','Catación y aprobación del lote por el equipo de catadores'],
+ ['Tostado, molienda y empaque','Planta de Santo Domingo','9 mar 2026','Orden de producción OP-26-0311 registrada en el ERP'],
+ ['Control de calidad','Calidad e Inocuidad','9 mar 2026','Lote aprobado · muestra de retención archivada'],
+ ['Almacenaje','Centro Logístico Rafael Perelló','10 mar 2026','Ubicación asignada por el WMS · temperatura controlada por debajo de 24 °C'],
+ ['Despacho y entrega','Exportación','18 mar 2026','Pedido del CRM PED-26-1874 · factura emitida sin re-digitación']
+];
+document.getElementById('steps').innerHTML=STEPS.map((s,i)=>`<li class="step done"><span class="num">${i+1}</span><div class="box"><div class="top"><strong>${s[0]}</strong><span class="when">${s[2]}</span></div><span>${s[1]}</span><span class="data">${s[3]}</span></div></li>`).join('');
+// QR ilustrativo (patrón decorativo, no codifica datos)
+(function(){const c=document.getElementById('qr'),x=c.getContext('2d'),n=29;let seed=418;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280};
+ x.fillStyle='#fff';x.fillRect(0,0,n,n);x.fillStyle='#12372a';
+ for(let i=0;i<n;i++)for(let j=0;j<n;j++){if(rnd()>.52)x.fillRect(i,j,1,1)}
+ const finder=(a,b)=>{x.fillStyle='#fff';x.fillRect(a-1,b-1,9,9);x.fillStyle='#12372a';x.fillRect(a,b,7,7);x.fillStyle='#fff';x.fillRect(a+1,b+1,5,5);x.fillStyle='#12372a';x.fillRect(a+2,b+2,3,3)};
+ finder(0,0);finder(n-7,0);finder(0,n-7);})();
+
+// Ruta
+const HZ=[
+ {n:'Corto plazo',m:'Meses 1 a 12',t:'Fundamentos',amt:28573600,items:['Comité de Transformación Digital, PMO y Dirección de Tecnología','ERP en producción al mes 10','Tableros de KPIs al mes 12','100 % de usuarios del ERP capacitados'],state:'Completado (simulado)'},
+ {n:'Mediano plazo',m:'Meses 13 a 24',t:'Expansión e integración',amt:24740100,items:['CRM con 100 % de cuentas activas al mes 18','WMS con precisión de inventario ≥ 99 %','Flujo pedido–entrega–factura sin re-digitación al mes 20','80 % de pedidos en tableta al mes 24'],state:'En curso · mes 18',now:true},
+ {n:'Largo plazo',m:'Meses 25 a 36',t:'Consolidación e innovación',amt:20565600,items:['Pronóstico de ventas ≥ 85 %','Trazabilidad digital del 100 % de lotes de exportación al mes 30','Portal de clientes y proveedores','Metodología en todas las unidades de negocio'],state:'Pendiente'}
+];
+const total=HZ.reduce((s,h)=>s+h.amt,0);
+const rd=v=>'RD$ '+v.toLocaleString('es-DO');
+document.getElementById('road').innerHTML=HZ.map(h=>`<article class="hz${h.now?' now':''}"><div><span class="eyebrow">${h.m}</span><h3 style="font-family:var(--f-display);font-size:1.1rem">${h.n}: ${h.t}</h3></div><span class="chip ${h.now?'warn':(h.state.startsWith('Completado')?'ok':'neutral')}" style="justify-self:start">${h.state}</span><ul>${h.items.map(i=>`<li>${i}</li>`).join('')}</ul><div><span class="money">${rd(h.amt)}</span> <span class="muted" style="font-size:.85rem">· ${(h.amt/total*100).toFixed(1)} % del total</span></div><div class="bar"><span style="width:${(h.amt/HZ[0].amt*100).toFixed(1)}%"></span></div></article>`).join('');
+const pos=(18/36*100);document.getElementById('fill').style.width=pos+'%';document.getElementById('marker').style.left=`calc(${pos}% - 1px)`;
+
+// Revelado al hacer scroll (solo para lo que está fuera de la primera pantalla)
+const io=('IntersectionObserver' in window)?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.remove('pre');io.unobserve(e.target)}}),{threshold:.12}):null;
+function prime(root){
+  if(reduce||!io)return;
+  root.querySelectorAll('.kpi,.detail,.alert,.step,.hz,.timeline,.lotcard,footer').forEach((el,i)=>{
+    const r=el.getBoundingClientRect();
+    if(r.height&&r.top>innerHeight*.92){el.classList.add('reveal','pre');el.style.transitionDelay=(i%4)*70+'ms';io.observe(el)}
+  });
+}
+function animatePanel(panel){
+  if(reduce)return;
+  [...panel.querySelectorAll('.kpi,.step,.hz,.lotcard,.timeline')].forEach((el,i)=>{
+    const r=el.getBoundingClientRect();if(r.top>innerHeight)return;
+    el.classList.remove('rise');void el.offsetWidth;el.style.animationDelay=Math.min(i,8)*70+'ms';el.classList.add('rise');
+  });
+  if(panel.id==='ruta'){
+    const bars=[...panel.querySelectorAll('.bar span'),document.getElementById('fill')];
+    bars.forEach(b=>{b.dataset.w=b.dataset.w||b.style.width;b.style.transition='none';b.style.width='0%'});
+    requestAnimationFrame(()=>requestAnimationFrame(()=>bars.forEach(b=>{b.style.transition='';b.style.width=b.dataset.w})));
+  }
+  if(panel.id==='tablero')grid.querySelectorAll('.spark').forEach(s=>{const p=s.querySelector('.line');p.style.animation='none';void p.getBoundingClientRect();p.style.animation=''});
+  prime(panel);
+}
+
+// Barra de progreso y navegación fija
+const bar=document.getElementById('progress'),nav=document.querySelector('nav');
+function onScroll(){const h=document.documentElement.scrollHeight-innerHeight;bar.style.transform=`scaleX(${h>0?Math.min(1,scrollY/h):0})`;nav.classList.toggle('stuck',nav.getBoundingClientRect().top<=1&&scrollY>0)}
+addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+// Pestañas
+const tabs=[...document.querySelectorAll('[role=tab]')];
+function select(id,anim=true){tabs.forEach(t=>{const on=t.getAttribute('aria-controls')===id;t.setAttribute('aria-selected',on);document.getElementById(t.getAttribute('aria-controls')).hidden=!on});
+  const panel=document.getElementById(id);if(anim)animatePanel(panel);}
+tabs.forEach(t=>t.addEventListener('click',()=>select(t.getAttribute('aria-controls'))));
+const h=(location.hash||'').slice(1);if(['tablero','trazabilidad','ruta'].includes(h))select(h,false);
+prime(document);
+})();
+</script>
+
+</body>
+</html>
